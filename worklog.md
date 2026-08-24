@@ -181,3 +181,30 @@ Stage Summary:
 - Demo login flow works: seed → auth → dashboard
 - Screenshots saved for desktop and mobile views
 
+---
+Task ID: 2
+Agent: Main Agent
+Task: Switch from SQLite to Neon PostgreSQL and test full flow
+
+Work Log:
+- Updated .env with Neon PostgreSQL connection URL
+- Changed Prisma schema provider from "sqlite" to "postgresql"
+- Ran `prisma generate` and `prisma db push` to create tables in Neon
+- Discovered stale system env var (DATABASE_URL=file:...) was overriding .env
+- Updated db.ts to read DATABASE_URL directly from .env file, bypassing system env vars
+- Killed and restarted dev server with correct PostgreSQL connection
+- Tested full flow via agent-browser:
+  - Demo Login: seed (200, 54s cold start), auth (200), dashboard loaded
+  - Credential Sign In: auto-fill doctor@demo.com, sign in, dashboard loaded (200)
+  - All pages verified: Dashboard, Patients, Patient Detail, Alerts, Monitoring, Care Adherence, Settings
+  - Sign Out → Sign In flow works
+- Restored full URL with channel_binding=require in .env
+
+Stage Summary:
+- All 6 tables created in Neon PostgreSQL (User, Patient, Observation, RiskAssessment, Alert, CareActivity)
+- Seed creates 2 users, 5 patients, ~30 observations, risk assessments, alerts, 140 care activities
+- All 10+ API endpoints work with PostgreSQL (patients, auth, seed, risk, alerts, care-activities, monitoring-history)
+- First seed takes ~54s due to Neon cold start; subsequent queries ~0.5-2s
+- Minor: /api/risk returns 400 when called without patientId (handled gracefully by frontend)
+- db.ts now reads .env directly to avoid stale system env var override
+
