@@ -2,19 +2,36 @@
 
 import { useAppStore } from '@/store/useAppStore';
 import { LoginPage } from '@/components/login/LoginPage';
-import { AppShell } from '@/components/layout/AppShell';
-import DashboardPage from '@/components/dashboard/DashboardPage';
-import { PatientsPage } from '@/components/patients/PatientsPage';
-import { PatientDetailPage } from '@/components/patients/PatientDetailPage';
-import { NewObservationPage } from '@/components/observations/NewObservationPage';
-import { AlertsPage } from '@/components/alerts/AlertsPage';
-import { MonitoringPage } from '@/components/monitoring/MonitoringPage';
-import { CareAdherencePage } from '@/components/care/CareAdherencePage';
-import { SettingsPage } from '@/components/settings/SettingsPage';
-import { AddPatientDialog } from '@/components/patients/AddPatientDialog';
 import { useState } from 'react';
-import { AIAssistantPanel } from '@/components/ai/AIAssistantPanel';
 import { Sparkles } from 'lucide-react';
+import dynamic from 'next/dynamic';
+
+// Lazy load everything except login to minimize initial bundle
+const AppShell = dynamic(() => import('@/components/layout/AppShell').then(m => ({ default: m.AppShell })), {
+  ssr: false,
+  loading: () => <div className="flex items-center justify-center h-screen bg-slate-50"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div></div>,
+});
+const DashboardPage = dynamic(() => import('@/components/dashboard/DashboardPage'), {
+  ssr: false,
+  loading: () => <PageLoader />,
+});
+const PatientsPage = dynamic(() => import('@/components/patients/PatientsPage').then(m => ({ default: m.PatientsPage })), { ssr: false, loading: () => <PageLoader /> });
+const PatientDetailPage = dynamic(() => import('@/components/patients/PatientDetailPage').then(m => ({ default: m.PatientDetailPage })), { ssr: false, loading: () => <PageLoader /> });
+const NewObservationPage = dynamic(() => import('@/components/observations/NewObservationPage').then(m => ({ default: m.NewObservationPage })), { ssr: false, loading: () => <PageLoader /> });
+const AlertsPage = dynamic(() => import('@/components/alerts/AlertsPage').then(m => ({ default: m.AlertsPage })), { ssr: false, loading: () => <PageLoader /> });
+const MonitoringPage = dynamic(() => import('@/components/monitoring/MonitoringPage').then(m => ({ default: m.MonitoringPage })), { ssr: false, loading: () => <PageLoader /> });
+const CareAdherencePage = dynamic(() => import('@/components/care/CareAdherencePage').then(m => ({ default: m.CareAdherencePage })), { ssr: false, loading: () => <PageLoader /> });
+const SettingsPage = dynamic(() => import('@/components/settings/SettingsPage').then(m => ({ default: m.SettingsPage })), { ssr: false, loading: () => <PageLoader /> });
+const AddPatientDialog = dynamic(() => import('@/components/patients/AddPatientDialog').then(m => ({ default: m.AddPatientDialog })), { ssr: false, loading: () => <PageLoader /> });
+const AIAssistantPanel = dynamic(() => import('@/components/ai/AIAssistantPanel').then(m => ({ default: m.AIAssistantPanel })), { ssr: false });
+
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center h-64">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
+    </div>
+  );
+}
 
 function PageRouter() {
   const currentPage = useAppStore((s) => s.currentPage);
@@ -58,7 +75,6 @@ export default function Home() {
     <AppShell>
       <div className="relative">
         <PageRouter />
-        {/* AI Assistant floating button - visible when a patient is selected */}
         {selectedPatient && (
           <>
             <button
