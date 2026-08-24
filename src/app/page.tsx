@@ -77,6 +77,15 @@ function LoginPage() {
     }
     setLoading(true);
     try {
+      // Auto-seed if database is empty
+      try {
+        const patientsRes = await fetch('/api/patients');
+        const patients = await patientsRes.json();
+        if (!Array.isArray(patients) || patients.length === 0) {
+          await fetch('/api/seed', { method: 'POST' });
+        }
+      } catch { /* ignore */ }
+
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -243,6 +252,39 @@ function LoginPage() {
             >
               {demoLoading ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Loading demo...</> : 'Demo Login (Doctor)'}
             </Button>
+          </div>
+
+          {/* Demo credentials hint */}
+          <div className="mt-5 bg-slate-50 rounded-xl border border-slate-200 p-4">
+            <p className="text-xs font-medium text-slate-500 mb-2">Demo Credentials</p>
+            <div className="space-y-1.5">
+              <button
+                type="button"
+                onClick={() => { setEmail('doctor@demo.com'); setPassword('demo123'); }}
+                className="flex items-center gap-2 w-full text-left group"
+              >
+                <div className="w-6 h-6 rounded-full bg-teal-100 flex items-center justify-center shrink-0">
+                  <span className="text-[10px] font-bold text-teal-700">D</span>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-slate-700 group-hover:text-teal-700 transition-colors">doctor@demo.com</p>
+                  <p className="text-[11px] text-slate-400">Doctor · any password</p>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => { setEmail('caregiver@demo.com'); setPassword('demo123'); }}
+                className="flex items-center gap-2 w-full text-left group"
+              >
+                <div className="w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+                  <span className="text-[10px] font-bold text-amber-700">C</span>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-slate-700 group-hover:text-teal-700 transition-colors">caregiver@demo.com</p>
+                  <p className="text-[11px] text-slate-400">Caregiver · any password</p>
+                </div>
+              </button>
+            </div>
           </div>
 
           <div className="md:hidden mt-6">
