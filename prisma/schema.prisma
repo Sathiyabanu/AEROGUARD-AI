@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String   @default("caregiver") // doctor, caregiver, patient
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Patient {
+  id                  String   @id @default(cuid())
+  patientId           String   @unique // P001, P002, etc.
+  name                String
+  age                 Int
+  tracheostomyInfo    String   @default("")
+  baselinePressure    Float    @default(2.0)
+  baselineRedness     Int      @default(0)
+  baselineDischarge   Int      @default(0)
+  baselineAdherence   Int      @default(90)
+  status              String   @default("active") // active, discharged
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  observations      Observation[]
+  riskAssessments   RiskAssessment[]
+  alerts            Alert[]
+  careActivities    CareActivity[]
+}
+
+model Observation {
+  id              String   @id @default(cuid())
+  patientId       String
+  pressure        Float    @default(0)
+  redness         Int      @default(0)
+  discharge       Int      @default(0)
+  secretionLevel  String   @default("low") // low, moderate, high
+  careAdherence   Int      @default(100)
+  imageUrl        String?
+  imageAnalysis   String?  @default("{}") // JSON string for VLM analysis
+  symptoms        String   @default("")
+  swelling        Int      @default(0) // 0-100
+  createdAt       DateTime @default(now())
+
+  patient         Patient  @relation(fields: [patientId], references: [id])
+  riskAssessment  RiskAssessment?
+}
+
+model RiskAssessment {
+  id              String   @id @default(cuid())
+  patientId       String
+  observationId   String?  @unique
+  riskScore       Int      @default(0)
+  riskLevel       String   @default("LOW") // LOW, ELEVATED, HIGH
+  reasons         String   @default("[]") // JSON array of risk reasons
+  contributors    String   @default("[]") // JSON array of {factor, points, status}
+  createdAt       DateTime @default(now())
+
+  patient     Patient     @relation(fields: [patientId], references: [id])
+  observation Observation? @relation(fields: [observationId], references: [id])
+  alert       Alert[]
+}
+
+model Alert {
+  id                String   @id @default(cuid())
+  patientId         String
+  riskAssessmentId  String?
+  alertLevel        String   @default("ELEVATED") // LOW, ELEVATED, HIGH
+  message           String
+  previousScore     Int?
+  newScore          Int?
+  mainContributors  String   @default("[]") // JSON array
+  recommendedAction String   @default("")
+ status            String   @default("active") // active, reviewed, dismissed
+  createdAt         DateTime @default(now())
+
+  patient        Patient        @relation(fields: [patientId], references: [id])
+  riskAssessment RiskAssessment? @relation(fields: [riskAssessmentId], references: [id])
+}
+
+model CareActivity {
+  id           String   @id @default(cuid())
+  patientId    String
+  activityName String   // stoma_care, tube_care, cleaning, observation
+  status       String   @default("completed") // completed, missed
+  date         String   // YYYY-MM-DD format
+  createdAt    DateTime @default(now())
+
+  patient Patient @relation(fields: [patientId], references: [id])
+}
